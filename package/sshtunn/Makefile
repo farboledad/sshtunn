@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshtunn
-PKG_VERSION:=1.0
+PKG_VERSION:=1.1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,10 +32,12 @@ define Package/sshtunn/install
 	$(CP) ./files/wrapper $(1)/bin
 	$(CP) ./files/internet_status_check $(1)/bin/
 	$(INSTALL_DIR) $(1)/www
-	$(CP) ./www/* $(1)/www
+	$(INSTALL_DIR) $(1)/www/sshtunn
+	$(CP) ./www/* $(1)/www/sshtunn
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(CP) ./files/sshtunn.init $(1)/etc/init.d/sshtunn
 	$(CP) ./files/rc.common $(1)/etc/
+	$(CP) ./files/sshtunn_install $(1)/etc/
 	$(CP) ./files/isv $(1)
 endef
 

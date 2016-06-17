@@ -1,9 +1,0 @@
-config KERNEL_SIGN_KEYPATH
-	string "Private key used for signing"
-	default "keys/privkey01.pem"
-config KERNEL_DEVIMAGE_NAME
-	string "Name of developer image"
-	default "SSHTunn"
-config KERNEL_DEVIMAGE_VERSION
-	string "Version number of developer image"
-	default "1.0"

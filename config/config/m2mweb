@@ -1,0 +1,5 @@
+package m2mweb
+
+config default 'sshtunn'
+	option path '/rom/mnt/cust/www/sshtunn'
+

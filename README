@@ -1,6 +1,18 @@
 INSTALLATION
 ============
-Package
-Link everything into the folders
-Config
-Copy eveything into the folder
+
+From SDK/packages
+=================
+ln -s ../../sshtunn/package/autossh .
+ln -s ../../sshtunn/package/jansson .
+ln -s ../../sshtunn/package/root_enabler .
+ln -s ../../sshtunn/package/sshtunn .
+
+From SDK
+========
+cp -v ../sshtunn/config/config/* config/config/
+
+To Compile
+==========
+
+Under Network, select the sshtunn application

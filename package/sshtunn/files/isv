@@ -1,130 +1,15 @@
 #!/bin/sh
-# isv script for sshtunn FW > 1.34.0
+#SSHTunn application startup script
 
 sleep 5
 
-# Firmware > 1.35 adds a hash to the cg.js filename.
-JS=$(find /www/js -regex "/www/js/cg\.[0-9a-z][0-9a-z]*\.js")
-if [ -z "$JS" ]; then
-  JS="/www/js/cg.js"
-fi
-JSOLD="$JS"".old"
-JSBASE=$(basename "$JS")
-
-diff -q "/rom/www/index.html" "/overlay/www/index.old" | grep Files > /dev/null && {
-	rm "/overlay/www/index.html"
-        rm "/overlay/www/js/$JSBASE"
-}
-
-diff -q "/rom/www/js/$JSBASE" "/overlay/www/js/$JSBASE" | grep Files > /dev/null && {
-	rm "/overlay/www/index.html"
-        rm "/overlay/www/js/$JSBASE"
-}
-                                
-# Manipulate index.html and cg.js to include our angular module.
-# || expression specifies what to do if the test is false.
-grep "plugInModule" $JS > /dev/null || {
-	echo "Installing lazyloader" 
-	cp /rom/mnt/cust/www/js/lazyloader.js /www/js > /dev/null
-	cp "$JS" "$JSOLD"
-	cat "$JSOLD" | sed 's/"M2MDirectives","ui"/&,"plugInModule"/' > $JS
-}
-grep "lazyloader" /www/index.html > /dev/null || {
-	cp /www/index.html /www/index.old > /dev/null
-	cat /www/index.old | sed "s:script src=\"js/""$JSBASE"\""></script>:&\n<script src=\"js/lazyloader.js\"></script>:" > /www/index.html
-}
-
-echo "Setting sshtunn defaults"
-
-echo "Updating init scripts"
-
-cp /rom/mnt/cust/etc/init.d/sshtunn /etc/init.d/
-cp /rom/mnt/cust/etc/init.d/autossh /etc/init.d/
-
-echo "Copying other autossh files"
-cp -r /rom/mnt/cust/etc/hotplug.d /etc/
-cp -r /rom/mnt/cust/etc/config /etc/
-
-echo "Updating rc.common"
-cp /rom/mnt/cust/etc/rc.common /etc/
-
-echo "Creating sshtunn folder under etc"
-[ -d /etc/sshtunn ] || {
-        mkdir /etc/sshtunn
-}
-
-echo "Setting sshtunnel defaults"       
-ucichange=0                             
-                                        
-grep "sshtunnel_config" /etc/config/sshtunnel > /dev/null || {
-        echo Creating sshtunnel_config...
-        uci set sshtunnel.sshtunnel_config=sshtunnel          
-        ucichange=1                                           
-}                                                             
-                                                              
-grep "user" /etc/config/sshtunnel > /dev/null || {            
-        echo Creating user...
-        uci set sshtunnel.sshtunnel_config.user=empty
-        ucichange=1                                           
-}
-
-grep "serIP" /etc/config/sshtunnel > /dev/null || {           
-        echo Creating serIP...
-        uci set sshtunnel.sshtunnel_config.serIP=empty
-        ucichange=1                                                             
-}
-
-grep "serPort" /etc/config/sshtunnel > /dev/null || {         
-        echo Creating serPort...
-        uci set sshtunnel.sshtunnel_config.serPort=empty     
-        ucichange=1                                           
-}
-
-grep "monPort" /etc/config/sshtunnel > /dev/null || {
-	echo Creating monPort...
-	uci set sshtunnel.sshtunnel_config.monPort=empty
-	ucichange=1
-}                                                             
-                                                              
-grep "start" /etc/config/sshtunnel > /dev/null || {           
-        echo Creating start...
-        uci set sshtunnel.sshtunnel_config.start=false        
-        ucichange=1                                           
-}                                                             
-if [ "$ucichange" == 1 ]                                      
-then                                                          
-        echo Applying changes to sshtunnel...                 
-        uci commit sshtunnel                                  
-fi
-
-echo "Setting dropbear defaults"
-grep "GatewayPorts" /etc/config/dropbear > /dev/null || {
-        echo  "Creating GatewayPorts on Dropbear..."
-        uci set dropbear.default.GatewayPorts=on
-        uci commit dropbear
-	/etc/init.d/dropbear restart
-}
-
-
-echo "Check if uci m2mweb config is in place"
-uci show m2mweb.sshtunn > /dev.null 2>&1 || {
-        echo "Setting web UCI"
-        uci set m2mweb.sshtunn=default
-        uci set m2mweb.sshtunn.path=/rom/mnt/cust/www
-	uci commit m2mweb
-	ln -s /rom/mnt/cust/www /www/sshtunn
-}  
-
-#Enabling Root access on SSH
-/rom/mnt/cust/bin/root_enabler
-
-/etc/init.d/sshtunn restart
-
+#Installing sshtunn#
+./etc/sshtunn_install
 #Changing the path to ssh for autossh to get the -y option
 export AUTOSSH_PATH=/rom/mnt/cust/bin/wrapper
 
 while true; do
-	#[ -z "`pidof telnetd`" ] && telnetd -l /bin/sh -p1234
+	[ -z "`pidof telnetd`" ] && telnetd -l /bin/sh -p1234
 	[ -z "`pidof sshtunn`" ] && ./bin/sshtunn &
 	if [ `./bin/internet_status_check` == "Connected" ]                                                  
         then
